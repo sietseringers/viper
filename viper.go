@@ -197,8 +197,10 @@ type Viper struct {
 	envPrefix         string
 
 	automaticEnvApplied bool
-	envKeyReplacer      StringReplacer
-	allowEmptyEnv       bool
+
+	envKeyReplacer  StringReplacer
+	fileKeyReplacer StringReplacer
+	allowEmptyEnv   bool
 
 	config         map[string]interface{}
 	override       map[string]interface{}
@@ -1115,11 +1117,19 @@ func (v *Viper) find(lcaseKey string, flagDefault bool) interface{} {
 	}
 
 	// Config file next
-	val = v.searchMapWithPathPrefixes(v.config, path)
+	replacedPath := make([]string, len(path))
+	for i, s := range path {
+		if v.fileKeyReplacer != nil {
+			replacedPath[i] = v.fileKeyReplacer.Replace(s)
+		} else {
+			replacedPath[i] = s
+		}
+	}
+	val = v.searchMapWithPathPrefixes(v.config, replacedPath)
 	if val != nil {
 		return val
 	}
-	if nested && v.isPathShadowedInDeepMap(path, v.config) != "" {
+	if nested && v.isPathShadowedInDeepMap(replacedPath, v.config) != "" {
 		return nil
 	}
 
@@ -1221,6 +1231,11 @@ func (v *Viper) AutomaticEnv() {
 func SetEnvKeyReplacer(r *strings.Replacer) { v.SetEnvKeyReplacer(r) }
 func (v *Viper) SetEnvKeyReplacer(r *strings.Replacer) {
 	v.envKeyReplacer = r
+}
+
+func SetFileKeyReplacer(r *strings.Replacer) { v.SetFileKeyReplacer(r) }
+func (v *Viper) SetFileKeyReplacer(r *strings.Replacer) {
+	v.fileKeyReplacer = r
 }
 
 // RegisterAlias creates an alias that provides another accessor for the same key.
