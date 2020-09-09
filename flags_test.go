@@ -3,7 +3,7 @@ package viper
 import (
 	"testing"
 
-	"github.com/spf13/pflag"
+	"github.com/sietseringers/pflag"
 	"github.com/stretchr/testify/assert"
 )
 
